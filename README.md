@@ -1,3 +1,14 @@
+# Final Project
+
+## Project Name
+Final Project
+
+## Project Description
+This project uses AI and natural language processing to analyze text and detect emotions.
+
+
+
+
 # IBM Emotion Detection Application
 
 ## Project Overview
