@@ -1,79 +1,31 @@
-# Question 4 answer
-# Output formatting implementation
-
-"""Emotion Detection module for Watson NLP service."""
+import json
 import requests
 
+URL = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
 
-def emotion_detector(text_to_analyze):
-    """
-    Analyze text for emotions using IBM Watson NLP service.
+HEADERS = {
+    'grpc-metadata-mm-model-id': 'emotion_aggregated-workflow_lang_en_stock'
+}
 
-    Args:
-        text_to_analyze (str): Text to analyze for emotional content.
+def emotion_detector(text_to_analyze: str) -> str:
+    payload = {'raw_document': {'text': text_to_analyze}}
 
-    Returns:
-        dict: Dictionary containing emotion scores and dominant emotion.
-              Keys: anger, disgust, fear, joy, sadness, dominant_emotion
-              Returns None values if text is empty or API error occurs.
-    """
-    url = (
-        "https://sn-watson-emotion.labs.skills.network/"
-        "v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
-    )
+    response = requests.post(url=URL, headers=HEADERS, json=payload)
 
-    headers = {
-        "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
-    }
+    json_response = json.loads(response.text)
 
-    payload = {
-        "raw_document": {
-            "text": text_to_analyze
-        }
-    }
+    emotions = json_response.get('emotionPredictions')[0] or {}
 
-    try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+    emotions_rating = emotions.get('emotion')
 
-        if response.status_code == 400:
-            return {
-                "anger": None,
-                "disgust": None,
-                "fear": None,
-                "joy": None,
-                "sadness": None,
-                "dominant_emotion": None
-            }
+    dominant_emotion = ''
+    highest_score = 0
 
-        response.raise_for_status()
-        response_data = response.json()
+    for emotion_key, emotion_value in emotions_rating.items():
+        if emotion_value > highest_score:
+            highest_score = emotion_value
+            dominant_emotion = emotion_key
+            
+    emotions_rating.update({'dominant_emotion': dominant_emotion})
 
-        # Extract emotion scores from the response
-        emotions = response_data.get(
-            "emotionPredictions", [{}]
-        )[0].get("emotion", {})
-
-        # Calculate dominant emotion based on highest score
-        dominant_emotion = (
-            max(emotions, key=emotions.get) if emotions else None
-        )
-
-        # Return formatted output with all emotion values and dominant emotion
-        return {
-            "anger": emotions.get("anger"),
-            "disgust": emotions.get("disgust"),
-            "fear": emotions.get("fear"),
-            "joy": emotions.get("joy"),
-            "sadness": emotions.get("sadness"),
-            "dominant_emotion": dominant_emotion
-        }
-    except requests.RequestException:
-        # Return None values if request fails
-        return {
-            "anger": None,
-            "disgust": None,
-            "fear": None,
-            "joy": None,
-            "sadness": None,
-            "dominant_emotion": None
-        }
+    return emotions_rating 
