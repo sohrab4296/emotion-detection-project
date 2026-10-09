@@ -1,6 +1,31 @@
-python3
-Python 3.10.12 (main, Aug 15 2025, 14:32:43) [GCC 11.4.0] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> from emotion_detection import emotion_detector
->>> emotion_detector("I love this new technology")
-'{"emotionPredictions":[{"emotion":{"anger":0.0132405795, "disgust":0.0020517302, "fear":0.009090992, "joy":0.9699522, "sadness":0.054984167}, "target":"", "emotionMentions":[{"span":{"begin":0, "end":26, "text":"I love this new technology"}, "emotion":{"anger":0.0132405795, "disgust":0.0020517302, "fear":0.009090992, "joy":0.9699522, "sadness":0.054984167}}]}], "producerId":{"name":"Ensemble Aggregated Emotion Workflow", "version":"0.0.1"}}'
+import json
+import requests
+
+def emotion_detector(text_to_analyze):
+    # 1. (Your existing code that makes the requests post goes here)
+    # response = requests.post(...)
+    
+    # 2. Parse the raw text string into a Python dictionary
+    # Assuming 'response.text' matches the string output from your terminal:
+    raw_response_str = '{"emotionPredictions":[{"emotion":{"anger":0.0132405795, "disgust":0.0020517302, "fear":0.009090992, "joy":0.9699522, "sadness":0.054984167}...]}' 
+    
+    # Convert the string to a dictionary
+    formatted_response = json.loads(raw_response_str)
+    
+    # Extract the emotion scores
+    emotions = formatted_response['emotionPredictions'][0]['emotion']
+    
+    # Find the emotion with the highest score
+    dominant_emotion = max(emotions, key=emotions.get)
+    
+    # 3. Construct the exact dictionary output your Flask app needs
+    result = {
+        'anger': emotions['anger'],
+        'disgust': emotions['disgust'],
+        'fear': emotions['fear'],
+        'joy': emotions['joy'],
+        'sadness': emotions['sadness'],
+        'dominant_emotion': dominant_emotion
+    }
+    
+    return result
