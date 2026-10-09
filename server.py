@@ -1,41 +1,33 @@
-"""Flask application for Emotion Detection service."""
-from flask import Flask, request
+
+Original file line number 	Diff line number 	Diff line change
+@@ -0,0 +1,30 @@
+""" Flask server to detect emotions """
+from flask import Flask, jsonify, render_template, request
 from EmotionDetection.emotion_detection import emotion_detector
 
 app = Flask(__name__)
 
-
-@app.route("/")
-def homepage():
-    """
-    Homepage endpoint.
-
-    Returns:
-        str: Application name
-    """
-    return "Emotion Detection App"
+@app.route('/')
+def root():
+    """ Render the main application  page"""
+    return render_template('index.html')
 
 
-@app.route("/emotionDetector")
+@app.route('/emotionDetector', methods=['GET'])
 def emotion_detector_route():
+    """ Endpoint to detect emotions based on a text
+        and return the dominant emotion based on the
+        highest score
     """
-    Emotion detection endpoint.
+    text_to_analyze = request.args.get('textToAnalyze')
 
-    Query parameters:
-        textToAnalyze (str): Text to analyze for emotions
+    response = emotion_detector(text_to_analyze)
 
-    Returns:
-        str: Formatted response with emotion analysis or error message
-    """
-    text_to_analyze = request.args.get("textToAnalyze", "")
+    if response.get('dominant_emotion') is None:
+        return 'Invalid text! Please try again!.'
 
-    result = emotion_detector(text_to_analyze)
-
-    if result["dominant_emotion"] is None:
-        return "Invalid text! Please try again!", 400
-
-    return f"For the given statement, the system response is {result}"
+    return jsonify(response)
 
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5001, debug=True)
