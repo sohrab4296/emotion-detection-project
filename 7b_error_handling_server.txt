@@ -1,37 +1,24 @@
-# Question 13 answer
-# Blank input handling
+from flask import Flask, jsonify, render_template, request
+from EmotionDetection.emotion_detection import emotion_detector
 
-# From server.py - Error handling section
+app = Flask(__name__)
 
-@app.route("/emotionDetector")
+@app.route('/')
+def root():
+    return render_template('index.html')
+
+
+@app.route('/emotionDetector', methods=['GET'])
 def emotion_detector_route():
-    """
-    Emotion detection endpoint.
+    text_to_analyze = request.args.get('textToAnalyze')
 
-    Query parameters:
-        textToAnalyze (str): Text to analyze for emotions
+    response = emotion_detector(text_to_analyze)
 
-    Returns:
-        str: Formatted response with emotion analysis or error message
-    """
-    # Get the text to analyze from query parameters
-    text_to_analyze = request.args.get("textToAnalyze", "")
+    if response.get('dominant_emotion') is None:
+        return 'Invalid text! Please try again!.'
 
-    # Call the emotion detector function
-    result = emotion_detector(text_to_analyze)
-
-    # ERROR HANDLING: Check if dominant_emotion is None (blank input or error)
-    if result["dominant_emotion"] is None:
-        return "Invalid text! Please try again!", 400
-
-    # Return successful response
-    return f"For the given statement, the system response is {result}"
+    return jsonify(response)
 
 
-# Explanation of error handling:
-# 1. When textToAnalyze parameter is empty or blank, the emotion_detector function
-#    returns a dictionary with all values set to None
-# 2. The server checks if result["dominant_emotion"] is None
-# 3. If it is None, the server returns the error message "Invalid text! Please try again!"
-#    with HTTP status code 400
-# 4. Otherwise, the server returns the formatted response with emotion analysis
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
