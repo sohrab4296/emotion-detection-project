@@ -1,27 +1,28 @@
-import json
+"""Emotion Detection module for Watson NLP service."""
 import requests
 
 
 def emotion_detector(text_to_analyze):
-    """Analyze text for emotions using IBM Watson NLP service.
-
+    """
+    Analyze text for emotions using IBM Watson NLP service.
+    
     Args:
         text_to_analyze (str): Text to analyze for emotional content.
-
+        
     Returns:
         dict: Dictionary containing emotion scores and dominant emotion.
               Keys: anger, disgust, fear, joy, sadness, dominant_emotion
               Returns None values if text is empty or API error occurs.
     """
-    # Check for blank or empty input string
-    if text_to_analyze is None or not text_to_analyze.strip():
+    # Check for blank or null input
+    if not text_to_analyze or text_to_analyze.strip() == "":
         return {
             "anger": None,
             "disgust": None,
             "fear": None,
             "joy": None,
             "sadness": None,
-            "dominant_emotion": None,
+            "dominant_emotion": None
         }
 
     url = (
@@ -33,12 +34,16 @@ def emotion_detector(text_to_analyze):
         "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
     }
 
-    payload = {"raw_document": {"text": text_to_analyze}}
+    payload = {
+        "raw_document": {
+            "text": text_to_analyze
+        }
+    }
 
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=10)
 
-        # Handle bad request status code (e.g., blank or invalid input handled by server)
+        # Handle bad request (status code 400)
         if response.status_code == 400:
             return {
                 "anger": None,
@@ -46,29 +51,23 @@ def emotion_detector(text_to_analyze):
                 "fear": None,
                 "joy": None,
                 "sadness": None,
-                "dominant_emotion": None,
+                "dominant_emotion": None
             }
 
         response.raise_for_status()
-        response_json = response.json()
+        response_data = response.json()
 
-        # Extract emotion predictions from the response structure
-        emotions = (
-            response_json.get("emotionPredictions", [{}])[0]
-            .get("emotion", {})
-        )
+        # Extract emotions dictionary
+        emotions = response_data.get("emotionPredictions", [{}])[0].get("emotion", {})
 
-        anger_score = emotions.get("anger")
-        disgust_score = emotions.get("disgust")
-        fear_score = emotions.get("fear")
-        joy_score = emotions.get("joy")
-        sadness_score = emotions.get("sadness")
+        anger_score = emotions.get("anger", 0)
+        disgust_score = emotions.get("disgust", 0)
+        fear_score = emotions.get("fear", 0)
+        joy_score = emotions.get("joy", 0)
+        sadness_score = emotions.get("sadness", 0)
 
-        # Find the dominant emotion with the highest score
-        if emotions:
-            dominant_emotion = max(emotions, key=emotions.get)
-        else:
-            dominant_emotion = None
+        # Determine dominant emotion
+        dominant_emotion = max(emotions, key=emotions.get) if emotions else None
 
         return {
             "anger": anger_score,
@@ -76,7 +75,7 @@ def emotion_detector(text_to_analyze):
             "fear": fear_score,
             "joy": joy_score,
             "sadness": sadness_score,
-            "dominant_emotion": dominant_emotion,
+            "dominant_emotion": dominant_emotion
         }
 
     except requests.RequestException:
@@ -86,5 +85,5 @@ def emotion_detector(text_to_analyze):
             "fear": None,
             "joy": None,
             "sadness": None,
-            "dominant_emotion": None,
+            "dominant_emotion": None
         }
